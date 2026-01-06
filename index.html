@@ -161,14 +161,12 @@
         const aiUnit = aiUnits[0];
         const playerUnits = units.filter(u => u.player === 1 && u.health > 0);
         
-        if (!canMove(aiUnit)) {
-          setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
-          return;
-        }
-
         const validMoves = getValidMoves(aiUnit);
-        if (validMoves.length === 0) {
+
+        if (!canMove(aiUnit) || validMoves.length === 0) {
+          // IA PASSA
           setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
+          setCurrentPlayer(1);
           return;
         }
 
@@ -208,6 +206,17 @@
           setCurrentPlayer(2);
           setTimeout(() => makeAIMove(), 1000);
         }
+      };
+
+      const handlePass = () => {
+        if (!selectedUnit) return;
+        if (activatedUnits.has(selectedUnit.id)) return;
+
+        setActivatedUnits(prev => new Set([...prev, selectedUnit.id]));
+        setSelectedUnit(null);
+
+        setCurrentPlayer(2);
+        setTimeout(() => makeAIMove(), 1000);
       };
 
       /* =====================================================
@@ -385,6 +394,16 @@
             
             <div className="flex-1 overflow-hidden">
               <HexGrid />
+              {selectedUnit && gamePhase === 'action' && currentPlayer === 1 && (
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2">
+                  <button
+                    onClick={handlePass}
+                    className="px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-500 active:bg-gray-600"
+                  >
+                    Passa
+                  </button>
+                </div>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-1 p-1 bg-gray-900 text-xs flex-shrink-0">
