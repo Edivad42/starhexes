@@ -63,7 +63,8 @@
                     health: unitType.health,
                     maxHealth: unitType.health,
                     type: u.type,
-                    damage: unitType.damage
+                    damage: unitType.damage,
+                    capitalDamage: unitType.capitalDamage
                   });
                 });
                 
@@ -78,7 +79,8 @@
                     health: unitType.health,
                     maxHealth: unitType.health,
                     type: u.type,
-                    damage: unitType.damage
+                    damage: unitType.damage,
+                    capitalDamage: unitType.capitalDamage
                   });
                 });
                 
@@ -259,7 +261,7 @@
             if (allActivated) {
               resolveCombat();
             }
-          }, [activatedUnits, units, gamePhase]);
+          }, [activatedUnits, gamePhase]);
 
           const resolveCombat = () => {
             setGamePhase('combat');
@@ -313,7 +315,7 @@
                   });
                 
                 if (!hasEnemyNeighbors) {
-                  log.push(`${unit.id} infligge ${config.combat.capitalDamage} danni alla nave capitale nemica!`);
+                  log.push(`${unit.id} infligge ${unit.capitalDamage} danni alla nave capitale nemica!`);
                 }
               }
             });
@@ -352,8 +354,19 @@
                     const isP2Capital = config.capitalZones.player2.includes(q);
                     
                     let fillColor = '#1e293b';
-                    if (isP1Capital) fillColor = '#1e3a8a';
-                    if (isP2Capital) fillColor = '#7f1d1d';
+                    let strokeColor = '#475569';
+                    let strokeWidth = 2;
+                    
+                    if (isP1Capital) {
+                      fillColor = '#1e293b';
+                      strokeColor = '#3b82f6';
+                      strokeWidth = 3;
+                    }
+                    if (isP2Capital) {
+                      fillColor = '#1e293b';
+                      strokeColor = '#ef4444';
+                      strokeWidth = 3;
+                    }
                     if (isValidMove) fillColor = '#064e3b';
                     if (isSelected) fillColor = '#fbbf24';
                     
@@ -362,8 +375,8 @@
                         <polygon
                           points={`${x},${y-hexSize} ${x+hexSize*0.866},${y-hexSize/2} ${x+hexSize*0.866},${y+hexSize/2} ${x},${y+hexSize} ${x-hexSize*0.866},${y+hexSize/2} ${x-hexSize*0.866},${y-hexSize/2}`}
                           fill={fillColor}
-                          stroke="#475569"
-                          strokeWidth="2"
+                          stroke={strokeColor}
+                          strokeWidth={strokeWidth}
                           onClick={() => unit ? handleUnitClick(unit) : handleHexClick(q, r)}
                           className="cursor-pointer hover:opacity-80 transition-opacity"
                         />
