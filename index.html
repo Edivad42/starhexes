@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="description" content="Star Wars Hex Tactics - Gioco tattico a turni">
+    <title>Star Wars Hex Tactics</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: none;
+        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Configurazione del gioco
+        const CONFIG = {
+          mapWidth: 9,
+          mapHeight: 7,
+          capitalZones: {
+            player1: [0, 1, 2],
+            player2: [6, 7, 8]
+          },
+          unitHealth: 100,
+          baseDamage: 30,
+          capitalDamage: 20
+        };
+
+        // Utility per calcolare le coordinate esagonali
+        const hexUtils = {
+          getNeighbors: (q, r) => [
+            [q + 1, r], [q - 1, r],
+            [q, r + 1], [q, r - 1],
+            [q + 1, r - 1], [q - 1, r + 1]
+          ]
+        };
+
+        const PlaneIcon = ({ x, y, size, color }) => (
+          <path
+            d={`M ${x} ${y-size/2} L ${x+size/3} ${y+size/2} L ${x} ${y+size/3} L ${x-size/3} ${y+size/2} Z`}
+            fill={color}
+            style={{ pointerEvents: 'none' }}
+          />
+        );
+
+        const StarWarsHexGame = () => {
+          const [units, setUnits] = useState([]);
+          const [currentPlayer, setCurrentPlayer] = useState(1);
+          const [selectedUnit, setSelectedUnit] = useState(null);
+          const [activatedUnits, setActivatedUnits] = useState(new Set());
+          const [gamePhase, setGamePhase] = useState('action');
+          const [combatLog, setCombatLog] = useState([]);
+
+          useEffect(() => {
+            const initialUnits = [
+              { id: 'p1_1', player: 1, q: 1, r: 2, health: CONFIG.unitHealth, type: 'fighter' },
+              { id: 'p1_2', player: 1, q: 1, r: 3, health: CONFIG.unitHealth, type: 'fighter' },
+              { id: 'p1_3', player: 1, q: 1, r: 4, health: CONFIG.unitHealth, type: 'fighter' },
+              { id: 'p2_1', player: 2, q: 7, r: 2, health: CONFIG.unitHealth, type: 'fighter' },
+              { id: 'p2_2', player: 2, q: 7, r: 3, health: CONFIG.unitHealth, type: 'fighter' },
+              { id: 'p2_3', player: 2, q: 7, r: 4, health: CONFIG.unitHealth, type: 'fighter' }
+            ];
+            setUnits(initialUnits);
+          }, []);
+
+          const isOccupied = (q, r, excludeId = null) => {
+            return units.some(u => u.q === q && u.r === r && u.id !== excludeId && u.health > 0);
+          };
+
+          const getUnitAt = (q, r) => {
+            return units.find(u => u.q === q && u.r === r && u.health > 0);
+          };
+
+          const isEngaged = (unit) => {
+            const neighbors = hexUtils.getNeighbors(unit.q, unit.r);
+            const enemyNeighbors = neighbors.filter(([q, r]) => {
+              const neighbor = getUnitAt(q, r);
+              return neighbor && neighbor.player !== unit.player;
+            });
+            return enemyNeighbors.length > 0;
+          };
+
+          const canMove = (unit) => {
+            if (!isEngaged(unit)) return true;
+            
+            const neighbors = hexUtils.getNeighbors(unit.q, unit.r);
+            const enemyNeighbors = neighbors.filter(([q, r]) => {
+              const neighbor = getUnitAt(q, r);
+              return neighbor && neighbor.player !== unit.player;
+            });
+            
+            if (enemyNeighbors.length === 1) return false;
+            
+            return enemyNeighbors.every(([q, r]) => {
+              const enemy = getUnitAt(q, r);
+              const enemyEngagements = hexUtils.getNeighbors(q, r).filter(([nq, nr]) => {
+                const n = getUnitAt(nq, nr);
+                return n && n.player !== enemy.player;
+              });
+              return enemyEngagements.length > 1;
+            });
+          };
+
+          const getValidMoves = (unit) => {
+            if (!canMove(unit)) return [];
+            
+            const neighbors = hexUtils.getNeighbors(unit.q, unit.r);
+            return neighbors.filter(([q, r]) => 
+              q >= 0 && q < CONFIG.mapWidth && 
+              r >= 0 && r < CONFIG.mapHeight && 
+              !isOccupied(q, r, unit.id)
+            );
+          };
+
+          const handleUnitClick = (unit) => {
+            if (gamePhase !== 'action') return;
+            if (unit.player !== currentPlayer) return;
+            if (activatedUnits.has(unit.id)) return;
+            
+            setSelectedUnit(unit);
+          };
+
+          const handleHexClick = (q, r) => {
+            if (!selectedUnit || gamePhase !== 'action') return;
+            
+            const validMoves = getValidMoves(selectedUnit);
+            const isValidMove = validMoves.some(([mq, mr]) => mq === q && mr === r);
+            
+            if (isValidMove) {
+              setUnits(units.map(u => 
+                u.id === selectedUnit.id ? { ...u, q, r } : u
+              ));
+              setActivatedUnits(new Set([...activatedUnits, selectedUnit.id]));
+              setSelectedUnit(null);
+              
+              const nextPlayer = currentPlayer === 1 ? 2 : 1;
+              const allActivated = units.filter(u => u.health > 0).every(u => 
+                activatedUnits.has(u.id) || u.id === selectedUnit.id || u.player !== nextPlayer
+              );
+              
+              if (allActivated) {
+                const allUnitsActivated = units.filter(u => u.health > 0).every(u => 
+                  activatedUnits.has(u.id) || u.id === selectedUnit.id
+                );
+                
+                if (allUnitsActivated) {
+                  resolveCombat();
+                } else {
+                  setCurrentPlayer(nextPlayer);
+                }
+              }
+            }
+          };
+
+          const resolveCombat = () => {
+            setGamePhase('combat');
+            const log = [];
+            let newUnits = [...units];
+
+            const combatPairs = new Map();
+            
+            newUnits.forEach(unit => {
+              if (unit.health <= 0) return;
+              
+              const neighbors = hexUtils.getNeighbors(unit.q, unit.r);
+              const enemies = neighbors
+                .map(([q, r]) => getUnitAt(q, r))
+                .filter(n => n && n.player !== unit.player && n.health > 0);
+              
+              if (enemies.length > 0) {
+                const damagePerEnemy = CONFIG.baseDamage / enemies.length;
+                enemies.forEach(enemy => {
+                  const key = [unit.id, enemy.id].sort().join('-');
+                  if (!combatPairs.has(key)) {
+                    combatPairs.set(key, { unit, enemy, damage: damagePerEnemy });
+                  }
+                });
+              }
+            });
+
+            combatPairs.forEach(({ unit, enemy, damage }) => {
+              const unitIdx = newUnits.findIndex(u => u.id === unit.id);
+              const enemyIdx = newUnits.findIndex(u => u.id === enemy.id);
+              
+              if (unitIdx !== -1 && enemyIdx !== -1) {
+                newUnits[unitIdx] = { ...newUnits[unitIdx], health: Math.max(0, newUnits[unitIdx].health - damage) };
+                newUnits[enemyIdx] = { ...newUnits[enemyIdx], health: Math.max(0, newUnits[enemyIdx].health - damage) };
+                log.push(`${unit.id} e ${enemy.id} si infliggono ${damage.toFixed(0)} danni`);
+              }
+            });
+
+            newUnits.forEach(unit => {
+              if (unit.health <= 0) return;
+              
+              const isInEnemyCapitalZone = unit.player === 1 
+                ? CONFIG.capitalZones.player2.includes(unit.q)
+                : CONFIG.capitalZones.player1.includes(unit.q);
+              
+              if (isInEnemyCapitalZone) {
+                const hasEnemyNeighbors = hexUtils.getNeighbors(unit.q, unit.r)
+                  .some(([q, r]) => {
+                    const n = getUnitAt(q, r);
+                    return n && n.player !== unit.player && n.health > 0;
+                  });
+                
+                if (!hasEnemyNeighbors) {
+                  log.push(`${unit.id} infligge ${CONFIG.capitalDamage} danni alla nave capitale nemica!`);
+                }
+              }
+            });
+
+            setUnits(newUnits);
+            setCombatLog(log);
+            
+            setTimeout(() => {
+              setGamePhase('action');
+              setActivatedUnits(new Set());
+              setCombatLog([]);
+              setCurrentPlayer(1);
+            }, 3000);
+          };
+
+          const HexGrid = () => {
+            const hexSize = 30;
+            const hexWidth = hexSize * Math.sqrt(3);
+            const hexHeight = hexSize * 2;
+            const vertDist = hexHeight * 0.75;
+            
+            return (
+              <svg width="800" height="500" className="bg-gray-900">
+                {Array.from({ length: CONFIG.mapHeight }, (_, r) => 
+                  Array.from({ length: CONFIG.mapWidth }, (_, q) => {
+                    const x = hexWidth * q + (r % 2) * (hexWidth / 2) + 80;
+                    const y = vertDist * r + 60;
+                    
+                    const unit = getUnitAt(q, r);
+                    const isSelected = selectedUnit && selectedUnit.q === q && selectedUnit.r === r;
+                    const validMoves = selectedUnit ? getValidMoves(selectedUnit) : [];
+                    const isValidMove = validMoves.some(([mq, mr]) => mq === q && mr === r);
+                    
+                    const isP1Capital = CONFIG.capitalZones.player1.includes(q);
+                    const isP2Capital = CONFIG.capitalZones.player2.includes(q);
+                    
+                    let fillColor = '#1e293b';
+                    if (isP1Capital) fillColor = '#1e3a8a';
+                    if (isP2Capital) fillColor = '#7f1d1d';
+                    if (isValidMove) fillColor = '#064e3b';
+                    if (isSelected) fillColor = '#fbbf24';
+                    
+                    return (
+                      <g key={`${q}-${r}`}>
+                        <polygon
+                          points={`${x},${y-hexSize} ${x+hexSize*0.866},${y-hexSize/2} ${x+hexSize*0.866},${y+hexSize/2} ${x},${y+hexSize} ${x-hexSize*0.866},${y+hexSize/2} ${x-hexSize*0.866},${y-hexSize/2}`}
+                          fill={fillColor}
+                          stroke="#475569"
+                          strokeWidth="2"
+                          onClick={() => unit ? handleUnitClick(unit) : handleHexClick(q, r)}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        />
+                        {unit && unit.health > 0 && (
+                          <>
+                            <circle
+                              cx={x}
+                              cy={y}
+                              r={20}
+                              fill={unit.player === 1 ? '#3b82f6' : '#ef4444'}
+                              stroke={activatedUnits.has(unit.id) ? '#22c55e' : '#ffffff'}
+                              strokeWidth="3"
+                              onClick={() => handleUnitClick(unit)}
+                              className="cursor-pointer"
+                            />
+                            <PlaneIcon x={x} y={y} size={20} color="white" />
+                            <text
+                              x={x}
+                              y={y + 30}
+                              textAnchor="middle"
+                              fill="white"
+                              fontSize="10"
+                              style={{ pointerEvents: 'none' }}
+                            >
+                              {Math.round(unit.health)}
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    );
+                  })
+                )}
+              </svg>
+            );
+          };
+
+          return (
+            <div className="w-full h-screen bg-gray-800 flex flex-col items-center justify-center p-4">
+              <div className="bg-gray-900 rounded-lg shadow-2xl p-6 max-w-4xl">
+                <h1 className="text-3xl font-bold text-yellow-400 mb-4 text-center font-mono">
+                  STAR WARS: HEX TACTICS
+                </h1>
+                
+                <div className="mb-4 text-center">
+                  <div className="text-white text-lg mb-2">
+                    {gamePhase === 'action' ? (
+                      <>
+                        <span className={currentPlayer === 1 ? 'text-blue-400' : 'text-red-400'}>
+                          Giocatore {currentPlayer}
+                        </span>
+                        {' '}- Seleziona e muovi un'unità
+                      </>
+                    ) : (
+                      <span className="text-yellow-400">FASE COMBATTIMENTO</span>
+                    )}
+                  </div>
+                  {selectedUnit && (
+                    <div className="text-sm text-gray-400">
+                      Unità selezionata: {selectedUnit.id} 
+                      {!canMove(selectedUnit) && ' (INGAGGIATA - non può muoversi)'}
+                    </div>
+                  )}
+                </div>
+                
+                <HexGrid />
+                
+                {combatLog.length > 0 && (
+                  <div className="mt-4 bg-gray-800 p-3 rounded max-h-32 overflow-y-auto">
+                    <h3 className="text-yellow-400 font-bold mb-2">Log di Combattimento:</h3>
+                    {combatLog.map((log, i) => (
+                      <div key={i} className="text-sm text-gray-300">{log}</div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-blue-900 p-3 rounded">
+                    <h3 className="text-blue-300 font-bold mb-1">Giocatore 1 (BLU)</h3>
+                    <div className="text-white">
+                      Unità: {units.filter(u => u.player === 1 && u.health > 0).length}
+                    </div>
+                  </div>
+                  <div className="bg-red-900 p-3 rounded">
+                    <h3 className="text-red-300 font-bold mb-1">Giocatore 2 (ROSSO)</h3>
+                    <div className="text-white">
+                      Unità: {units.filter(u => u.player === 2 && u.health > 0).length}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<StarWarsHexGame />, document.getElementById('root'));
+    </script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
