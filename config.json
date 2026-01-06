@@ -25,6 +25,7 @@
             "name": "X-Wing",
             "health": 100,
             "damage": 30,
+            "capitalDamage": 20,
             "icon": "plane",
             "color": {
                 "player1": "#3b82f6",
@@ -34,7 +35,8 @@
         "aWing": {
             "name": "A-Wing",
             "health": 60,
-            "damage": 40,
+            "damage": 35,
+            "capitalDamage": 10,
             "icon": "plane",
             "color": {
                 "player1": "#10b981",
@@ -43,8 +45,9 @@
         },
         "yWing": {
             "name": "Y-Wing",
-            "health": 150,
-            "damage": 25,
+            "health": 120,
+            "damage": 20,
+            "capitalDamage": 30,
             "icon": "plane",
             "color": {
                 "player1": "#8b5cf6",
@@ -55,6 +58,7 @@
             "name": "TIE Fighter",
             "health": 60,
             "damage": 20,
+            "capitalDamage": 10,
             "icon": "plane",
             "color": {
                 "player1": "#3b82f6",
@@ -64,7 +68,8 @@
         "tieI": {
             "name": "TIE Interceptor",
             "health": 60,
-            "damage": 40,
+            "damage": 35,
+            "capitalDamage": 10,
             "icon": "plane",
             "color": {
                 "player1": "#10b981",
@@ -73,8 +78,9 @@
         },
         "tieB": {
             "name": "TIE Bomber",
-            "health": 150,
-            "damage": 25,
+            "health": 90,
+            "damage": 15,
+            "capitalDamage": 25,
             "icon": "plane",
             "color": {
                 "player1": "#8b5cf6",
@@ -85,34 +91,34 @@
     "startingUnits": {
         "player1": [
             {
-                "type": "fighter",
+                "type": "xWing",
                 "q": 1,
                 "r": 2
             },
             {
-                "type": "fighter",
+                "type": "aWing",
                 "q": 1,
                 "r": 3
             },
             {
-                "type": "fighter",
+                "type": "yWing",
                 "q": 1,
                 "r": 4
             }
         ],
         "player2": [
             {
-                "type": "fighter",
+                "type": "tieF",
                 "q": 7,
                 "r": 2
             },
             {
-                "type": "fighter",
+                "type": "tieI",
                 "q": 7,
                 "r": 3
             },
             {
-                "type": "fighter",
+                "type": "tieB",
                 "q": 7,
                 "r": 4
             }
