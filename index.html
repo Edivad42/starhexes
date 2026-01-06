@@ -34,7 +34,7 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect, useCallback } = React;
+        const { useState, useEffect } = React;
         
         const StarHexesGame = () => {
           const [config, setConfig] = useState(null);
@@ -184,6 +184,15 @@
             setSelectedUnit(unit);
           };
 
+          const checkAndResolveCombat = (newActivatedUnits) => {
+            const aliveUnits = units.filter(u => u.health > 0);
+            const allActivated = aliveUnits.every(u => newActivatedUnits.has(u.id));
+            
+            if (allActivated) {
+              setTimeout(() => resolveCombat(), 500);
+            }
+          };
+
           const makeAIMove = () => {
             const aiUnits = units.filter(u => u.player === 2 && u.health > 0 && !activatedUnits.has(u.id));
             if (aiUnits.length === 0) {
@@ -194,10 +203,12 @@
             const playerUnits = units.filter(u => u.player === 1 && u.health > 0);
             
             const validMoves = getValidMoves(aiUnit);
+            const newActivatedUnits = new Set([...activatedUnits, aiUnit.id]);
 
             if (!canMove(aiUnit) || validMoves.length === 0) {
-              setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
+              setActivatedUnits(newActivatedUnits);
               setCurrentPlayer(1);
+              checkAndResolveCombat(newActivatedUnits);
               return;
             }
 
@@ -217,8 +228,9 @@
             setUnits(prevUnits => prevUnits.map(u => 
               u.id === aiUnit.id ? { ...u, q: bestMove[0], r: bestMove[1] } : u
             ));
-            setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
+            setActivatedUnits(newActivatedUnits);
             setCurrentPlayer(1);
+            checkAndResolveCombat(newActivatedUnits);
           };
 
           const handleHexClick = (q, r) => {
@@ -231,7 +243,8 @@
               setUnits(units.map(u => 
                 u.id === selectedUnit.id ? { ...u, q, r } : u
               ));
-              setActivatedUnits(new Set([...activatedUnits, selectedUnit.id]));
+              const newActivatedUnits = new Set([...activatedUnits, selectedUnit.id]);
+              setActivatedUnits(newActivatedUnits);
               setSelectedUnit(null);
               
               setCurrentPlayer(2);
@@ -243,27 +256,15 @@
             if (!selectedUnit) return;
             if (activatedUnits.has(selectedUnit.id)) return;
 
-            setActivatedUnits(prev => new Set([...prev, selectedUnit.id]));
+            const newActivatedUnits = new Set([...activatedUnits, selectedUnit.id]);
+            setActivatedUnits(newActivatedUnits);
             setSelectedUnit(null);
 
             setCurrentPlayer(2);
             setTimeout(() => makeAIMove(), config.ui.animationSpeed);
           };
 
-          useEffect(() => {
-            if (gamePhase !== 'action') return;
-
-            const aliveUnits = units.filter(u => u.health > 0);
-            if (!aliveUnits.length) return;
-
-            const allActivated = aliveUnits.every(u => activatedUnits.has(u.id));
-
-            if (allActivated) {
-              resolveCombat();
-            }
-          }, [activatedUnits, gamePhase, units, resolveCombat]);
-
-          const resolveCombat = useCallback(() => {
+          const resolveCombat = () => {
             setGamePhase('combat');
             const log = [];
             let newUnits = [...units];
@@ -330,7 +331,7 @@
               setCurrentPlayer(1);
               setSelectedUnit(null);
             }, config.ui.combatLogDuration);
-          }, [units, config]);
+          };
 
           const HexGrid = () => {
             const hexSize = config.map.hexSize;
