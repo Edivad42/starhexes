@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e293b">
-    <meta name="description" content="Star Wars Hex Tactics - Gioco tattico a turni">
-    <title>Star Wars Hex Tactics</title>
+    <meta name="description" content="Star Hexes - Gioco tattico a turni nello spazio">
+    <title>Star Hexes</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-192.png">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -18,9 +18,15 @@
             padding: 0;
             overflow: hidden;
             touch-action: none;
+            width: 100vw;
+            height: 100vh;
         }
         * {
             -webkit-tap-highlight-color: transparent;
+        }
+        #root {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
@@ -60,7 +66,7 @@
           />
         );
 
-        const StarWarsHexGame = () => {
+        const StarHexesGame = () => {
           const [units, setUnits] = useState([]);
           const [currentPlayer, setCurrentPlayer] = useState(1);
           const [selectedUnit, setSelectedUnit] = useState(null);
@@ -238,17 +244,20 @@
           };
 
           const HexGrid = () => {
-            const hexSize = 30;
+            const hexSize = 25;
             const hexWidth = hexSize * Math.sqrt(3);
             const hexHeight = hexSize * 2;
             const vertDist = hexHeight * 0.75;
             
+            const svgWidth = Math.min(window.innerWidth * 0.95, 900);
+            const svgHeight = Math.min(window.innerHeight * 0.6, 450);
+            
             return (
-              <svg width="800" height="500" className="bg-gray-900">
+              <svg width={svgWidth} height={svgHeight} className="bg-gray-900" viewBox="0 0 750 400" preserveAspectRatio="xMidYMid meet">
                 {Array.from({ length: CONFIG.mapHeight }, (_, r) => 
                   Array.from({ length: CONFIG.mapWidth }, (_, q) => {
-                    const x = hexWidth * q + (r % 2) * (hexWidth / 2) + 80;
-                    const y = vertDist * r + 60;
+                    const x = hexWidth * q + (r % 2) * (hexWidth / 2) + 60;
+                    const y = vertDist * r + 50;
                     
                     const unit = getUnitAt(q, r);
                     const isSelected = selectedUnit && selectedUnit.q === q && selectedUnit.r === r;
@@ -308,14 +317,14 @@
           };
 
           return (
-            <div className="w-full h-screen bg-gray-800 flex flex-col items-center justify-center p-4">
-              <div className="bg-gray-900 rounded-lg shadow-2xl p-6 max-w-4xl">
-                <h1 className="text-3xl font-bold text-yellow-400 mb-4 text-center font-mono">
-                  STAR WARS: HEX TACTICS
+            <div className="w-full h-full bg-gray-800 flex flex-col items-center justify-center p-2 overflow-hidden">
+              <div className="bg-gray-900 rounded-lg shadow-2xl p-3 w-full h-full flex flex-col max-w-screen-xl">
+                <h1 className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2 text-center font-mono">
+                  STAR HEXES
                 </h1>
                 
-                <div className="mb-4 text-center">
-                  <div className="text-white text-lg mb-2">
+                <div className="mb-2 text-center flex-shrink-0">
+                  <div className="text-white text-sm md:text-lg mb-1">
                     {gamePhase === 'action' ? (
                       <>
                         <span className={currentPlayer === 1 ? 'text-blue-400' : 'text-red-400'}>
@@ -328,33 +337,35 @@
                     )}
                   </div>
                   {selectedUnit && (
-                    <div className="text-sm text-gray-400">
-                      Unità selezionata: {selectedUnit.id} 
-                      {!canMove(selectedUnit) && ' (INGAGGIATA - non può muoversi)'}
+                    <div className="text-xs md:text-sm text-gray-400">
+                      Unità: {selectedUnit.id} 
+                      {!canMove(selectedUnit) && ' (INGAGGIATA)'}
                     </div>
                   )}
                 </div>
                 
-                <HexGrid />
+                <div className="flex-1 flex items-center justify-center overflow-hidden">
+                  <HexGrid />
+                </div>
                 
                 {combatLog.length > 0 && (
-                  <div className="mt-4 bg-gray-800 p-3 rounded max-h-32 overflow-y-auto">
-                    <h3 className="text-yellow-400 font-bold mb-2">Log di Combattimento:</h3>
+                  <div className="mt-2 bg-gray-800 p-2 rounded max-h-20 overflow-y-auto flex-shrink-0">
+                    <h3 className="text-yellow-400 font-bold mb-1 text-sm">Combattimento:</h3>
                     {combatLog.map((log, i) => (
-                      <div key={i} className="text-sm text-gray-300">{log}</div>
+                      <div key={i} className="text-xs text-gray-300">{log}</div>
                     ))}
                   </div>
                 )}
                 
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-blue-900 p-3 rounded">
-                    <h3 className="text-blue-300 font-bold mb-1">Giocatore 1 (BLU)</h3>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs flex-shrink-0">
+                  <div className="bg-blue-900 p-2 rounded">
+                    <h3 className="text-blue-300 font-bold mb-1">P1 (BLU)</h3>
                     <div className="text-white">
                       Unità: {units.filter(u => u.player === 1 && u.health > 0).length}
                     </div>
                   </div>
-                  <div className="bg-red-900 p-3 rounded">
-                    <h3 className="text-red-300 font-bold mb-1">Giocatore 2 (ROSSO)</h3>
+                  <div className="bg-red-900 p-2 rounded">
+                    <h3 className="text-red-300 font-bold mb-1">P2 (ROSSO)</h3>
                     <div className="text-white">
                       Unità: {units.filter(u => u.player === 2 && u.health > 0).length}
                     </div>
@@ -365,7 +376,7 @@
           );
         };
 
-        ReactDOM.render(<StarWarsHexGame />, document.getElementById('root'));
+        ReactDOM.render(<StarHexesGame />, document.getElementById('root'));
     </script>
     
     <script>
