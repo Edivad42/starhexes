@@ -51,11 +51,23 @@
 
         // Utility per calcolare le coordinate esagonali
         const hexUtils = {
-          getNeighbors: (q, r) => [
-            [q + 1, r], [q - 1, r],
-            [q, r + 1], [q, r - 1],
-            [q + 1, r - 1], [q - 1, r + 1]
-          ]
+          getNeighbors: (q, r) => {
+            // Offset coordinates: riga pari vs dispari hanno vicini diversi
+            const evenRow = r % 2 === 0;
+            if (evenRow) {
+              return [
+                [q + 1, r], [q - 1, r],      // destra, sinistra
+                [q, r - 1], [q - 1, r - 1],  // alto-dx, alto-sx
+                [q, r + 1], [q - 1, r + 1]   // basso-dx, basso-sx
+              ];
+            } else {
+              return [
+                [q + 1, r], [q - 1, r],      // destra, sinistra
+                [q + 1, r - 1], [q, r - 1],  // alto-dx, alto-sx
+                [q + 1, r + 1], [q, r + 1]   // basso-dx, basso-sx
+              ];
+            }
+          }
         };
 
         const PlaneIcon = ({ x, y, size, color }) => (
@@ -244,20 +256,17 @@
           };
 
           const HexGrid = () => {
-            const hexSize = 25;
+            const hexSize = 22;
             const hexWidth = hexSize * Math.sqrt(3);
             const hexHeight = hexSize * 2;
             const vertDist = hexHeight * 0.75;
             
-            const svgWidth = Math.min(window.innerWidth * 0.95, 900);
-            const svgHeight = Math.min(window.innerHeight * 0.6, 450);
-            
             return (
-              <svg width={svgWidth} height={svgHeight} className="bg-gray-900" viewBox="0 0 750 400" preserveAspectRatio="xMidYMid meet">
+              <svg width="100%" height="100%" className="bg-gray-900" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid meet">
                 {Array.from({ length: CONFIG.mapHeight }, (_, r) => 
                   Array.from({ length: CONFIG.mapWidth }, (_, q) => {
-                    const x = hexWidth * q + (r % 2) * (hexWidth / 2) + 60;
-                    const y = vertDist * r + 50;
+                    const x = hexWidth * q + (r % 2) * (hexWidth / 2) + 50;
+                    const y = vertDist * r + 40;
                     
                     const unit = getUnitAt(q, r);
                     const isSelected = selectedUnit && selectedUnit.q === q && selectedUnit.r === r;
@@ -317,58 +326,35 @@
           };
 
           return (
-            <div className="w-full h-full bg-gray-800 flex flex-col items-center justify-center p-2 overflow-hidden">
-              <div className="bg-gray-900 rounded-lg shadow-2xl p-3 w-full h-full flex flex-col max-w-screen-xl">
-                <h1 className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2 text-center font-mono">
-                  STAR HEXES
-                </h1>
-                
-                <div className="mb-2 text-center flex-shrink-0">
-                  <div className="text-white text-sm md:text-lg mb-1">
+            <div className="w-full h-full bg-gray-800 flex flex-col overflow-hidden">
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="text-center py-1 bg-gray-900 flex-shrink-0">
+                  <div className="text-white text-sm">
                     {gamePhase === 'action' ? (
                       <>
                         <span className={currentPlayer === 1 ? 'text-blue-400' : 'text-red-400'}>
-                          Giocatore {currentPlayer}
+                          P{currentPlayer}
                         </span>
-                        {' '}- Seleziona e muovi un'unità
+                        {' '}- Muovi unità
                       </>
                     ) : (
-                      <span className="text-yellow-400">FASE COMBATTIMENTO</span>
+                      <span className="text-yellow-400">COMBATTIMENTO</span>
                     )}
                   </div>
-                  {selectedUnit && (
-                    <div className="text-xs md:text-sm text-gray-400">
-                      Unità: {selectedUnit.id} 
-                      {!canMove(selectedUnit) && ' (INGAGGIATA)'}
-                    </div>
-                  )}
                 </div>
                 
-                <div className="flex-1 flex items-center justify-center overflow-hidden">
+                <div className="flex-1 overflow-hidden">
                   <HexGrid />
                 </div>
                 
-                {combatLog.length > 0 && (
-                  <div className="mt-2 bg-gray-800 p-2 rounded max-h-20 overflow-y-auto flex-shrink-0">
-                    <h3 className="text-yellow-400 font-bold mb-1 text-sm">Combattimento:</h3>
-                    {combatLog.map((log, i) => (
-                      <div key={i} className="text-xs text-gray-300">{log}</div>
-                    ))}
+                <div className="grid grid-cols-2 gap-1 p-1 bg-gray-900 text-xs flex-shrink-0">
+                  <div className="bg-blue-900 p-1 rounded">
+                    <span className="text-blue-300 font-bold">P1:</span>
+                    <span className="text-white ml-1">{units.filter(u => u.player === 1 && u.health > 0).length}</span>
                   </div>
-                )}
-                
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs flex-shrink-0">
-                  <div className="bg-blue-900 p-2 rounded">
-                    <h3 className="text-blue-300 font-bold mb-1">P1 (BLU)</h3>
-                    <div className="text-white">
-                      Unità: {units.filter(u => u.player === 1 && u.health > 0).length}
-                    </div>
-                  </div>
-                  <div className="bg-red-900 p-2 rounded">
-                    <h3 className="text-red-300 font-bold mb-1">P2 (ROSSO)</h3>
-                    <div className="text-white">
-                      Unità: {units.filter(u => u.player === 2 && u.health > 0).length}
-                    </div>
+                  <div className="bg-red-900 p-1 rounded">
+                    <span className="text-red-300 font-bold">P2:</span>
+                    <span className="text-white ml-1">{units.filter(u => u.player === 2 && u.health > 0).length}</span>
                   </div>
                 </div>
               </div>
