@@ -152,22 +152,9 @@
         setSelectedUnit(unit);
       };
 
-      const checkEndOfRound = () => {
-        const allUnitsActivated = units.filter(u => u.health > 0).every(u => 
-          activatedUnits.has(u.id)
-        );
-        
-        if (allUnitsActivated) {
-          resolveCombat();
-        } else {
-          setCurrentPlayer(1);
-        }
-      };
-
       const makeAIMove = () => {
         const aiUnits = units.filter(u => u.player === 2 && u.health > 0 && !activatedUnits.has(u.id));
         if (aiUnits.length === 0) {
-          checkEndOfRound();
           return;
         }
 
@@ -176,14 +163,12 @@
         
         if (!canMove(aiUnit)) {
           setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
-          setTimeout(() => checkEndOfRound(), 500);
           return;
         }
 
         const validMoves = getValidMoves(aiUnit);
         if (validMoves.length === 0) {
           setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
-          setTimeout(() => checkEndOfRound(), 500);
           return;
         }
 
@@ -204,10 +189,6 @@
           u.id === aiUnit.id ? { ...u, q: bestMove[0], r: bestMove[1] } : u
         ));
         setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
-        
-        setTimeout(() => {
-          checkEndOfRound();
-        }, 800);
       };
 
       const handleHexClick = (q, r) => {
@@ -227,6 +208,22 @@
           setTimeout(() => makeAIMove(), 1000);
         }
       };
+
+      /* =====================================================
+         FIX TURNI
+         ===================================================== */
+      useEffect(() => {
+        if (gamePhase !== 'action') return;
+
+        const aliveUnits = units.filter(u => u.health > 0);
+        if (!aliveUnits.length) return;
+
+        const allActivated = aliveUnits.every(u => activatedUnits.has(u.id));
+
+        if (allActivated) {
+          resolveCombat();
+        }
+      }, [activatedUnits, units, gamePhase]);
 
       const resolveCombat = () => {
         setGamePhase('combat');
