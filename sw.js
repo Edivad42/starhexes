@@ -1,8 +1,9 @@
-const CACHE_NAME = 'star-hexes-v0.0.3';
+const CACHE_NAME = 'star-hexes-v0.0.4';
 const urlsToCache = [
   '.',
   'index.html',
-  'manifest.json'
+  'manifest.json',
+  'config.json'
 ];
 
 self.addEventListener('install', event => {
