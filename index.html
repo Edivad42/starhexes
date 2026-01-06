@@ -189,6 +189,7 @@
           u.id === aiUnit.id ? { ...u, q: bestMove[0], r: bestMove[1] } : u
         ));
         setActivatedUnits(prev => new Set([...prev, aiUnit.id]));
+        setCurrentPlayer(1);
       };
 
       const handleHexClick = (q, r) => {
