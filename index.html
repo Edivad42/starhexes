@@ -34,7 +34,7 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useCallback } = React;
         
         const StarHexesGame = () => {
           const [config, setConfig] = useState(null);
@@ -261,9 +261,9 @@
             if (allActivated) {
               resolveCombat();
             }
-          }, [activatedUnits, gamePhase]);
+          }, [activatedUnits, gamePhase, units, resolveCombat]);
 
-          const resolveCombat = () => {
+          const resolveCombat = useCallback(() => {
             setGamePhase('combat');
             const log = [];
             let newUnits = [...units];
@@ -330,7 +330,7 @@
               setCurrentPlayer(1);
               setSelectedUnit(null);
             }, config.ui.combatLogDuration);
-          };
+          }, [units, config]);
 
           const HexGrid = () => {
             const hexSize = config.map.hexSize;
