@@ -1,4 +1,4 @@
-const CACHE_NAME = 'star-hexes-v1';
+const CACHE_NAME = 'star-hexes-v0.0.1';
 const urlsToCache = [
   '.',
   'index.html',
