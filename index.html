@@ -184,53 +184,73 @@
             setSelectedUnit(unit);
           };
 
-          const checkAndResolveCombat = (newActivatedUnits) => {
-            const aliveUnits = units.filter(u => u.health > 0);
-            const allActivated = aliveUnits.every(u => newActivatedUnits.has(u.id));
-            
-            if (allActivated) {
-              setTimeout(() => resolveCombat(), 500);
-            }
+          const checkAndResolveCombat = () => {
+            setTimeout(() => {
+              setActivatedUnits(currentActivated => {
+                setUnits(currentUnits => {
+                  const aliveUnits = currentUnits.filter(u => u.health > 0);
+                  const allActivated = aliveUnits.every(u => currentActivated.has(u.id));
+                  
+                  if (allActivated) {
+                    setTimeout(() => resolveCombat(), 100);
+                  }
+                  return currentUnits;
+                });
+                return currentActivated;
+              });
+            }, 100);
           };
 
           const makeAIMove = () => {
-            const aiUnits = units.filter(u => u.player === 2 && u.health > 0 && !activatedUnits.has(u.id));
-            if (aiUnits.length === 0) {
-              return;
-            }
+            setTimeout(() => {
+              setActivatedUnits(currentActivated => {
+                setUnits(currentUnits => {
+                  const aiUnits = currentUnits.filter(u => u.player === 2 && u.health > 0 && !currentActivated.has(u.id));
+                  
+                  if (aiUnits.length === 0) {
+                    checkAndResolveCombat();
+                    return currentUnits;
+                  }
 
-            const aiUnit = aiUnits[0];
-            const playerUnits = units.filter(u => u.player === 1 && u.health > 0);
-            
-            const validMoves = getValidMoves(aiUnit);
-            const newActivatedUnits = new Set([...activatedUnits, aiUnit.id]);
+                  const aiUnit = aiUnits[0];
+                  const playerUnits = currentUnits.filter(u => u.player === 1 && u.health > 0);
+                  const validMoves = getValidMoves(aiUnit);
 
-            if (!canMove(aiUnit) || validMoves.length === 0) {
-              setActivatedUnits(newActivatedUnits);
-              setCurrentPlayer(1);
-              checkAndResolveCombat(newActivatedUnits);
-              return;
-            }
+                  if (!canMove(aiUnit) || validMoves.length === 0) {
+                    const newActivated = new Set([...currentActivated, aiUnit.id]);
+                    setActivatedUnits(newActivated);
+                    setCurrentPlayer(1);
+                    checkAndResolveCombat();
+                    return currentUnits;
+                  }
 
-            let bestMove = validMoves[0];
-            let minDistance = Infinity;
+                  let bestMove = validMoves[0];
+                  let minDistance = Infinity;
 
-            validMoves.forEach(([mq, mr]) => {
-              playerUnits.forEach(pUnit => {
-                const dist = Math.abs(mq - pUnit.q) + Math.abs(mr - pUnit.r);
-                if (dist < minDistance) {
-                  minDistance = dist;
-                  bestMove = [mq, mr];
-                }
+                  validMoves.forEach(([mq, mr]) => {
+                    playerUnits.forEach(pUnit => {
+                      const dist = Math.abs(mq - pUnit.q) + Math.abs(mr - pUnit.r);
+                      if (dist < minDistance) {
+                        minDistance = dist;
+                        bestMove = [mq, mr];
+                      }
+                    });
+                  });
+
+                  const updatedUnits = currentUnits.map(u => 
+                    u.id === aiUnit.id ? { ...u, q: bestMove[0], r: bestMove[1] } : u
+                  );
+                  
+                  const newActivated = new Set([...currentActivated, aiUnit.id]);
+                  setActivatedUnits(newActivated);
+                  setCurrentPlayer(1);
+                  checkAndResolveCombat();
+                  
+                  return updatedUnits;
+                });
+                return currentActivated;
               });
-            });
-
-            setUnits(prevUnits => prevUnits.map(u => 
-              u.id === aiUnit.id ? { ...u, q: bestMove[0], r: bestMove[1] } : u
-            ));
-            setActivatedUnits(newActivatedUnits);
-            setCurrentPlayer(1);
-            checkAndResolveCombat(newActivatedUnits);
+            }, config.ui.animationSpeed);
           };
 
           const handleHexClick = (q, r) => {
@@ -243,11 +263,10 @@
               setUnits(units.map(u => 
                 u.id === selectedUnit.id ? { ...u, q, r } : u
               ));
-              const newActivatedUnits = new Set([...activatedUnits, selectedUnit.id]);
-              setActivatedUnits(newActivatedUnits);
+              setActivatedUnits(prev => new Set([...prev, selectedUnit.id]));
               setSelectedUnit(null);
-              
               setCurrentPlayer(2);
+              
               setTimeout(() => makeAIMove(), config.ui.animationSpeed);
             }
           };
@@ -256,11 +275,10 @@
             if (!selectedUnit) return;
             if (activatedUnits.has(selectedUnit.id)) return;
 
-            const newActivatedUnits = new Set([...activatedUnits, selectedUnit.id]);
-            setActivatedUnits(newActivatedUnits);
+            setActivatedUnits(prev => new Set([...prev, selectedUnit.id]));
             setSelectedUnit(null);
-
             setCurrentPlayer(2);
+
             setTimeout(() => makeAIMove(), config.ui.animationSpeed);
           };
 
