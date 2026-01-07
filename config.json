@@ -26,7 +26,8 @@
             "health": 100,
             "damage": 30,
             "capitalDamage": 20,
-            "icon": "plane",
+            "icon": "icons/starfighter/tieInterceptor.png",
+            "descsription": "An all-round fighter",
             "color": {
                 "player1": "#3b82f6",
                 "player2": "#ef4444"
@@ -37,7 +38,8 @@
             "health": 60,
             "damage": 35,
             "capitalDamage": 10,
-            "icon": "plane",
+            "icon": "icons/starfighter/tieInterceptor.png",
+            "descsription": "A fragile interceptor",
             "color": {
                 "player1": "#10b981",
                 "player2": "#f59e0b"
@@ -48,7 +50,8 @@
             "health": 120,
             "damage": 20,
             "capitalDamage": 30,
-            "icon": "plane",
+            "icon": "icons/starfighter/tieInterceptor.png",
+            "descsription": "A resistent bomber",
             "color": {
                 "player1": "#8b5cf6",
                 "player2": "#ec4899"
@@ -59,7 +62,8 @@
             "health": 60,
             "damage": 20,
             "capitalDamage": 10,
-            "icon": "plane",
+            "icon": "icons/starfighter/tieInterceptor.png",
+            "descsription": "A fragile fighter",
             "color": {
                 "player1": "#3b82f6",
                 "player2": "#ef4444"
@@ -70,7 +74,8 @@
             "health": 60,
             "damage": 35,
             "capitalDamage": 10,
-            "icon": "plane",
+            "icon": "icons/starfighter/tieInterceptor.png",
+            "descsription": "A fragile interceptor",
             "color": {
                 "player1": "#10b981",
                 "player2": "#f59e0b"
@@ -81,7 +86,8 @@
             "health": 90,
             "damage": 15,
             "capitalDamage": 25,
-            "icon": "plane",
+            "icon": "icons/starfighter/tieInterceptor.png",
+            "descsription": "An average bomber",
             "color": {
                 "player1": "#8b5cf6",
                 "player2": "#ec4899"

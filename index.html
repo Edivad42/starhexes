@@ -152,10 +152,13 @@
             }
           };
 
-          const PlaneIcon = ({ x, y, size, color }) => (
-            <path
-              d={`M ${x} ${y-size/2} L ${x+size/3} ${y+size/2} L ${x} ${y+size/3} L ${x-size/3} ${y+size/2} Z`}
-              fill={color}
+          const UnitIcon = ({ x, y, size, src }) => (
+            <image
+              href={src}
+              x={x - size / 2}
+              y={y - size / 2}
+              width={size}
+              height={size}
               style={{ pointerEvents: 'none' }}
             />
           );
@@ -414,7 +417,7 @@
                               onClick={() => handleUnitClick(unit)}
                               className="cursor-pointer"
                             />
-                            <PlaneIcon x={x} y={y} size={14} color="white" />
+                            <UnitIcon x={x} y={y} size={24} src={config.unitTypes[unit.type].icon}/>
                             {config.ui.showHealthNumbers && (
                               <text
                                 x={x}
